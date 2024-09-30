@@ -47,6 +47,10 @@ public class ConstantRecovery {
 
     private int if_cluster_workunits;
 
+    private int index_null_string;
+    private int index_null_double;
+    private int index_null_long;
+
 
     public DenialConstraintSet getREEsResults() {
         return this.REEsResults;
@@ -54,7 +58,8 @@ public class ConstantRecovery {
 
     public ConstantRecovery(DenialConstraintSet rees, ArrayList<Predicate> allRealPredicates,
                             int maxTupleNum, InputLight inputLight, long support, float confidence,
-                            long maxOneRelationNum, long allCount, int if_cluster_workunits) {
+                            long maxOneRelationNum, long allCount, int if_cluster_workunits,
+                            int index_null_string, int index_null_double, int index_null_long) {
         this.REEsResults = new DenialConstraintSet();
         this.reeTemplates = new ArrayList<>();
         this.transformREETemplates(rees, this.REEsResults);
@@ -67,6 +72,13 @@ public class ConstantRecovery {
         this.maxOneRelationNum = maxOneRelationNum;
         this.allCount = allCount;
         this.if_cluster_workunits = if_cluster_workunits;
+
+        this.index_null_string = index_null_string;
+        this.index_null_double = index_null_double;
+        this.index_null_long = index_null_long;
+        logger.info("index_null_string: {}", index_null_string);
+        logger.info("index_null_double: {}", index_null_double);
+        logger.info("index_null_long: {}", index_null_long);
 
         // invalid predicate combinations
         this.invalidX = new HashSet<>();
@@ -157,12 +169,12 @@ public class ConstantRecovery {
         for (Predicate p : this.allPredicates) {
             String k = p.getOperand1().getColumn().toStringData();
             if (! colsMap.containsKey(k)) {
-                ParsedColumnLight<?> col = new ParsedColumnLight<>(p.getOperand1().getColumn());
+                ParsedColumnLight<?> col = new ParsedColumnLight<>(p.getOperand1().getColumn(), p.getOperand1().getColumn().getType());
                 colsMap.put(k, col);
             }
             k = p.getOperand2().getColumn().toStringData();
             if (! colsMap.containsKey(k)) {
-                ParsedColumnLight<?> col = new ParsedColumnLight<>(p.getOperand2().getColumn());
+                ParsedColumnLight<?> col = new ParsedColumnLight<>(p.getOperand2().getColumn(), p.getOperand2().getColumn().getType());
                 colsMap.put(k, col);
             }
         }
@@ -693,7 +705,8 @@ public class ConstantRecovery {
                              SparkSession spark, SparkContextConfig sparkContextConfig, HashMap<String, Long> tupleNumberRelations) {
         JavaSparkContext sc = new JavaSparkContext(spark.sparkContext());
         BroadcastObj broadcastObj = new BroadcastObj(this.maxTupleNum, this.inputLight, this.support, this.confidence,
-                this.maxOneRelationNum, tupleNumberRelations);
+                this.maxOneRelationNum, tupleNumberRelations,
+                this.index_null_string, this.index_null_double, this.index_null_long);
         // broadcast data
         // ... left for future
 
@@ -864,7 +877,8 @@ public class ConstantRecovery {
 //            logger.info(">>>Will do multiTuplesRuleMining! {} | {}", currentList, rhsList);
             MultiTuplesRuleMiningOpt multiTuplesRuleMining = new MultiTuplesRuleMiningOpt(bobj.getMax_num_tuples(),
                     bobj.getInputLight(), bobj.getSupport(), bobj.getConfidence(), bobj.getMaxOneRelationNum(),
-                    unitSet.getAllCount(), bobj.getTupleNumberRelations());
+                    unitSet.getAllCount(), bobj.getTupleNumberRelations(),
+                    bobj.getIndex_null_string(), bobj.getIndex_null_double(), bobj.getIndex_null_long());
 
 //            TIntArrayList _list1 = pBegin.getOperand1().getColumnLight().getValueIntList(unitSet.getPids()[pBegin.getIndex1()]);
 //            TIntArrayList _list2 = pBegin.getOperand2().getColumnLight().getValueIntList(unitSet.getPids()[pBegin.getIndex2()]);
@@ -1431,7 +1445,8 @@ public class ConstantRecovery {
 
 
                 MultiTuplesRuleMiningOpt multiTuplesRuleMining = new MultiTuplesRuleMiningOpt(this.maxTupleNum,
-                        this.inputLight, this.support, this.confidence, maxOneRelationNum, allCount, tupleNumberRelations);
+                        this.inputLight, this.support, this.confidence, maxOneRelationNum, allCount, tupleNumberRelations,
+                        this.index_null_string, this.index_null_double, this.index_null_long);
 
                 List<Message> messages = multiTuplesRuleMining.validationMap1(unitSet, pBegin);
 

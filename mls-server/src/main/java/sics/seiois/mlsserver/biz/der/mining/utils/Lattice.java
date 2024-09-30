@@ -149,6 +149,7 @@ public class Lattice implements KryoSerializable {
 //        if (this.latticeLevel.get(key).getRHSs().size() == 0 || this.latticeLevel.get(key) == null ||
 //        this.latticeLevel.get(key).getPredicates() == null || this.latticeLevel.get(key).getRHSs() == null) {
 //            this.latticeLevel.remove(key);
+//            this.allLatticeVertexBits.remove(key);
 //        }
     }
 
@@ -159,6 +160,7 @@ public class Lattice implements KryoSerializable {
         IBitSet key = tmp_ps.getBitset();
         if (this.latticeLevel.containsKey(key)) {
             this.latticeLevel.remove(key);
+            this.allLatticeVertexBits.remove(key);
         }
     }
 
@@ -186,6 +188,7 @@ public class Lattice implements KryoSerializable {
         // prune invalid lattice vertex
         for (IBitSet key : removedKeys) {
             this.latticeLevel.remove(key);
+            this.allLatticeVertexBits.remove(key);
         }
 
     }
@@ -263,7 +266,6 @@ public class Lattice implements KryoSerializable {
         for (IBitSet key : this.latticeLevel.keySet()) {
             IBitSet t = this.latticeLevel.get(key).getPredicates().getBitset();
             if (invalidX.contains(t)) {
-                // this.latticeLevel.remove(key);
                 removedKeys.add(key);
             }
             // remove valid rules
@@ -280,6 +282,7 @@ public class Lattice implements KryoSerializable {
         // remove some keys
         for (IBitSet key : removedKeys) {
             this.latticeLevel.remove(key);
+            this.allLatticeVertexBits.remove(key);
         }
     }
 
@@ -289,8 +292,8 @@ public class Lattice implements KryoSerializable {
         for (IBitSet key : this.latticeLevel.keySet()) {
             IBitSet t = this.latticeLevel.get(key).getPredicates().getBitset();
             if (invalidX.contains(t)) {
-                // this.latticeLevel.remove(key);
                 removedKeys.add(key);
+                continue;
             }
             // check |len| - 1 predicateset -- new ADDED, need to re-test and re-think !!!
             for (Predicate r : this.latticeLevel.get(key).getPredicates()) {
@@ -303,7 +306,9 @@ public class Lattice implements KryoSerializable {
                 // removed invalid RHSs
                 if (invalidXRHSs.containsKey(temp.getBitset())) {
                     for (Predicate invalidRHS : invalidXRHSs.get(temp.getBitset())) {
-                        this.latticeLevel.get(key).getRHSs().remove(invalidRHS);
+                        if (this.latticeLevel.get(key).getRHSs().containsPredicate(invalidRHS)) {
+                            this.latticeLevel.get(key).getRHSs().remove(invalidRHS);
+                        }
                     }
                 }
                 // check 0 RHSs
@@ -343,7 +348,9 @@ public class Lattice implements KryoSerializable {
                 temp.remove(r);
                 if (validXRHSs.containsKey(temp.getBitset())) {
                     for (Predicate rhs : validXRHSs.get(temp.getBitset())) {
-                        this.latticeLevel.get(key).getRHSs().remove(rhs);
+                        if (this.latticeLevel.get(key).getRHSs().containsPredicate(rhs)) {
+                            this.latticeLevel.get(key).getRHSs().remove(rhs);
+                        }
                     }
                 }
                 if (this.latticeLevel.get(key).getRHSs().size() <= 0) {
@@ -355,6 +362,7 @@ public class Lattice implements KryoSerializable {
         // remove some keys
         for (IBitSet key : removedKeys) {
             this.latticeLevel.remove(key);
+            this.allLatticeVertexBits.remove(key);
         }
     }
 
@@ -517,6 +525,95 @@ public class Lattice implements KryoSerializable {
         }
         return valid;
     }
+
+    // check: (1) whether there exists constant predicates with the same index and attribute but different constant values in {lv, newP};
+    // (2) whether there exists constant predicates with the same attribute and constant but different index in {lv, newP}
+    public boolean checkInvalidExtension(LatticeVertex lv, Predicate newP) {
+//        if (!newP.isConstant()) {
+//            return false;
+//        }
+        int index_check = newP.getIndex1();
+        String attr_check = newP.getOperand1().getColumnLight().getName();
+        String constant_check = newP.getConstant();
+        for (Predicate p : lv.getPredicates()) {
+            if (!p.isConstant()) {
+                continue;
+            }
+            if (!p.getOperand1().getColumnLight().getName().equals(attr_check)) {
+                continue;
+            }
+            if (p.getIndex1() == index_check) { // (1) eg: t0.A=a1, t0.A=a2, should not co-exist
+                return true;
+            }
+            if (!p.getConstant().equals(constant_check)) {  // (2) eg: t0.A=a1, t1.A=a2, which equals to inequality predicate t0.A <> t1.A, meaningless
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    // for bi-variable rees with equality operator
+    public boolean checkTrivialExtension(LatticeVertex lv, Predicate newP) {
+        boolean t0_exist = false;
+        boolean t1_exist = false;
+        boolean t0_t1_exist = false;
+        if (newP.isConstant()) {
+            String attr = newP.getOperand1().getColumnLight().getName();
+            int index = newP.getIndex1();
+            if (index == 0) {
+                t0_exist = true;
+            } else {
+                t1_exist = true;
+            }
+            for (Predicate p : lv.getPredicates()) {
+                if (p.isConstant()) {
+                    if (!p.getOperand1().getColumnLight().getName().equals(attr)) {
+                        continue;
+                    }
+                    int index_p = p.getIndex1();
+                    if (index_p == 0) {
+                        t0_exist = true;
+                    } else {
+                        t1_exist = true;
+                    }
+                } else {
+                    if (!p.getOperand1().getColumnLight().getName().equals(attr)) {
+                        continue;
+                    }
+                    if (!p.getOperand2().getColumnLight().getName().equals(attr)) {
+                        continue;
+                    }
+                    t0_t1_exist = true;
+                }
+            }
+        } else {
+            t0_t1_exist = true;
+            String attr_1 = newP.getOperand1().getColumnLight().getName();
+            String attr_2 = newP.getOperand2().getColumnLight().getName();
+            for (Predicate p : lv.getPredicates()) {
+                if (p.isConstant()) {
+                    int index_p = p.getIndex1();
+                    if (index_p == newP.getIndex1() && p.getOperand1().getColumnLight().getName().equals(attr_1)) {
+                        if (index_p == 0) {
+                            t0_exist = true;
+                        } else {
+                            t1_exist = true;
+                        }
+                    }
+                    if (index_p == newP.getIndex2() && p.getOperand1().getColumnLight().getName().equals(attr_2)) {
+                        if (index_p == 0) {
+                            t0_exist = true;
+                        } else {
+                            t1_exist = true;
+                        }
+                    }
+                }
+            }
+        }
+        return t0_exist && t1_exist && t0_t1_exist;
+    }
+
 
     /*
         For lattice combination, e.g., AB + BC -> ABC
@@ -728,7 +825,12 @@ public class Lattice implements KryoSerializable {
                     if (lv.ifContain(newP)) {
                         continue;
                     }
+                    // subset checking
                     if (!this.checkValidExtension(lv, newP)) {
+                        continue;
+                    }
+                    // check trivial rules
+                    if (this.checkTrivialExtension(lv, newP)) {
                         continue;
                     }
                     // LatticeVertex lv_child = new LatticeVertex(lv, newP);
@@ -747,24 +849,34 @@ public class Lattice implements KryoSerializable {
                         }
 //                    }
                 } else {
-                    // left
-                    if (p.checkIfCorrectOneRelationName(r_1)) {
-                        Predicate cp1 = predicateProviderIndex.getPredicate(p, tid_pair.left, tid_pair.left);
-                        if (lv.ifContain(cp1)) {
-                            continue;
-                        }
-                        if (!this.checkValidExtension(lv, cp1)) {
-                            continue;
-                        }
-                        if (!this.checkValidConstantPredicateExtension(lv, cp1)) {
-                            continue;
-                        }
+                    for (int idx = 0; idx < 2; idx++) {
+                        // left
+                        if (idx == 0 && p.checkIfCorrectOneRelationName(r_1)) {
+                            Predicate cp1 = predicateProviderIndex.getPredicate(p, tid_pair.left, tid_pair.left);
+                            if (lv.ifContain(cp1)) {
+                                continue;
+                            }
+                            if (!this.checkValidExtension(lv, cp1)) {
+                                continue;
+                            }
+//                            if (!this.checkValidConstantPredicateExtension(lv, cp1)) {
+//                                continue;
+//                            }
+                            // check (1) whether there exists constant predicates with the same index and attribute but different constant values in {lv, newP};
+                            // (2) whether there exists constant predicates with the same attribute and constant but different index in {lv, newP}
+                            if (this.checkInvalidExtension(lv, cp1)) {
+                                continue;
+                            }
+                            // check trivial rules
+                            if (this.checkTrivialExtension(lv, cp1)) {
+                                continue;
+                            }
 
-                        // LatticeVertex lv_child = new LatticeVertex(lv, cp1);
-                        LatticeVertex lv_child = this.expandLatticeByDQN(lv, cp1, allPredicates, dqnmlp, predicatesHashIDs, ifDQN);
-                        if (lv_child == null) {
-                            continue;
-                        }
+                            // LatticeVertex lv_child = new LatticeVertex(lv, cp1);
+                            LatticeVertex lv_child = this.expandLatticeByDQN(lv, cp1, allPredicates, dqnmlp, predicatesHashIDs, ifDQN);
+                            if (lv_child == null) {
+                                continue;
+                            }
 //                        boolean valid = this.checkValidSubSetX(lv_child, invalidX);
 //                        if (valid && (!invalidX.contains(lv_child.getPredicates().getBitset()))) {
                             nextLevel.addLatticeVertex(lv_child);
@@ -774,25 +886,34 @@ public class Lattice implements KryoSerializable {
 //                           newLatticeVertices.add(lv_child);
                             }
 //                        }
-                    }
+                        }
 
-                    // right
-                    if (p.checkIfCorrectOneRelationName(r_2)) {
-                        Predicate cp2 = predicateProviderIndex.getPredicate(p, tid_pair.right, tid_pair.right);
-                        if (lv.ifContain(cp2)) {
-                            continue;
-                        }
-                        if (!this.checkValidExtension(lv, cp2)) {
-                            continue;
-                        }
-                        if (!this.checkValidConstantPredicateExtension(lv, cp2)) {
-                            continue;
-                        }
-                        // LatticeVertex lv_child_ = new LatticeVertex(lv, cp2);
-                        LatticeVertex lv_child_ = this.expandLatticeByDQN(lv, cp2, allPredicates, dqnmlp, predicatesHashIDs, ifDQN);
-                        if (lv_child_ == null) {
-                            continue;
-                        }
+                        // right
+                        if (idx == 1 && p.checkIfCorrectOneRelationName(r_2)) {
+                            Predicate cp2 = predicateProviderIndex.getPredicate(p, tid_pair.right, tid_pair.right);
+                            if (lv.ifContain(cp2)) {
+                                continue;
+                            }
+                            if (!this.checkValidExtension(lv, cp2)) {
+                                continue;
+                            }
+//                            if (!this.checkValidConstantPredicateExtension(lv, cp2)) {
+//                                continue;
+//                            }
+                            // check (1) whether there exists constant predicates with the same index and attribute but different constant values in {lv, newP};
+                            // (2) whether there exists constant predicates with the same attribute and constant but different index in {lv, newP}
+                            if (this.checkInvalidExtension(lv, cp2)) {
+                                continue;
+                            }
+                            // check trivial rules
+                            if (this.checkTrivialExtension(lv, cp2)) {
+                                continue;
+                            }
+                            // LatticeVertex lv_child_ = new LatticeVertex(lv, cp2);
+                            LatticeVertex lv_child_ = this.expandLatticeByDQN(lv, cp2, allPredicates, dqnmlp, predicatesHashIDs, ifDQN);
+                            if (lv_child_ == null) {
+                                continue;
+                            }
 //                        boolean valid = this.checkValidSubSetX(lv_child_, invalidX);
 //                        if (valid && (!invalidX.contains(lv_child_.getPredicates().getBitset()))) {
                             nextLevel.addLatticeVertex(lv_child_);
@@ -802,6 +923,7 @@ public class Lattice implements KryoSerializable {
 //                           newLatticeVertices.add(lv_child_);
                             }
 //                        }
+                        }
                     }
 
                 }
@@ -810,6 +932,10 @@ public class Lattice implements KryoSerializable {
         }
 
 //        logger.info("Expand First Step lattice : {}", nextLevel.printCurrents());
+
+        if (this.maxTupleNumPerRule <= 2) {
+            return nextLevel;
+        }
 
         // 2. scan all parent level and expand predicates with a new predicate containing one new tuple
         for (Map.Entry<IBitSet, LatticeVertex> entry : this.latticeLevel.entrySet()) {
@@ -994,6 +1120,7 @@ public class Lattice implements KryoSerializable {
         }
         for (IBitSet bs : removedKeys) {
             this.latticeLevel.remove(bs);
+            this.allLatticeVertexBits.remove(bs);
         }
     }
 

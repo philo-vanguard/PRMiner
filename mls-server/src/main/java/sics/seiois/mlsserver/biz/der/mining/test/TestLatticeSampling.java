@@ -129,6 +129,10 @@ public class TestLatticeSampling {
             // input.buildPLIs_col();
             input.buildPLIs_col_OnSpark(1000000);
 
+            int index_null_string = input.getIndexNullString();
+            int index_null_double = input.getIndexNullDouble();
+            int index_null_long = input.getIndexNullLong();
+
             // load ML Selection
             MLSelection mlsel = new MLSelection();
             mlsel.configure(mlsel_file);
@@ -166,14 +170,16 @@ public class TestLatticeSampling {
             if (ifDQN == false) {
                 parallelRuleDiscoverySampling = new ParallelRuleDiscoverySampling(allPredicates, K, maxTupleNum,
                         support, (float) errorThreshold, maxOneRelationNum, input, allCount,
-                        w_supp, w_conf, w_diver, w_succ, w_sub, ifPrune, if_conf_filter, 0.001f, if_cluster_workunits, filter_enum_number);
+                        w_supp, w_conf, w_diver, w_succ, w_sub, ifPrune, if_conf_filter, 0.001f, if_cluster_workunits, filter_enum_number,
+                        index_null_string, index_null_double, index_null_long);
             } else {
                 double DQNThreshold = 1.0;
                 MLPFilterClassifier dqn = new MLPFilterClassifier(DQNModelFile, DQNThreshold);
                 parallelRuleDiscoverySampling = new ParallelRuleDiscoverySampling(allPredicates, K, maxTupleNum,
                         support, (float)errorThreshold, maxOneRelationNum, input, allCount,
                         w_supp, w_conf, w_diver, w_succ, w_sub, ifPrune, if_conf_filter, 0.001f, if_cluster_workunits, filter_enum_number,
-                        ifDQN, dqn, predicatesHashIDFile);
+                        ifDQN, dqn, predicatesHashIDFile,
+                        index_null_string, index_null_double, index_null_long);
             }
 
             parallelRuleDiscoverySampling.levelwiseRuleDiscoveryLocal();

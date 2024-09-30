@@ -60,9 +60,15 @@ public class ParallelRuleDiscovery {
     // interestingness
     Interestingness interestingness;
 
+    private int index_null_string;
+    private int index_null_double;
+    private int index_null_long;
+
+
     public ParallelRuleDiscovery(List<Predicate> predicates, int K, int maxTupleNum, long support,
                                  float confidence, long maxOneRelationNum, Input input, long allCount,
-                                 float w_1, float w_2, float w_3, float w_4, float w_5, int ifPrune) {
+                                 float w_1, float w_2, float w_3, float w_4, float w_5, int ifPrune,
+                                 int index_null_string, int index_null_double, int index_null_long) {
         this.allPredicates = predicates;
         this.K = K;
         this.maxTupleNum = maxTupleNum;
@@ -73,6 +79,13 @@ public class ParallelRuleDiscovery {
         this.inputLight = new InputLight(input);
 
         this.ifPrune = ifPrune;
+
+        this.index_null_string = index_null_string;
+        this.index_null_double = index_null_double;
+        this.index_null_long = index_null_long;
+        logger.info("index_null_string: {}", index_null_string);
+        logger.info("index_null_double: {}", index_null_double);
+        logger.info("index_null_long: {}", index_null_long);
 
         // set support for each predicate;
         HashMap<String, HashMap<Integer, Long>> statistic = new HashMap<>();
@@ -401,7 +414,8 @@ public class ParallelRuleDiscovery {
         JavaSparkContext sc = new JavaSparkContext(spark.sparkContext());
         Broadcast<List<Predicate>> broadAllPredicate = sc.broadcast(allPredicates);
         BroadcastObj broadcastObj = new BroadcastObj(this.maxTupleNum, this.inputLight, this.support, this.confidence,
-                this.maxOneRelationNum, tupleNumberRelations);
+                this.maxOneRelationNum, tupleNumberRelations,
+                this.index_null_string, this.index_null_double, this.index_null_long);
         // broadcast data
         // ... left for future
 //        JavaSparkContext sc = new JavaSparkContext(spark.sparkContext());
@@ -493,12 +507,12 @@ public class ParallelRuleDiscovery {
         for (Predicate p : this.allPredicates) {
             String k = p.getOperand1().getColumn().toStringData();
             if (! colsMap.containsKey(k)) {
-                ParsedColumnLight<?> col = new ParsedColumnLight<>(p.getOperand1().getColumn());
+                ParsedColumnLight<?> col = new ParsedColumnLight<>(p.getOperand1().getColumn(), p.getOperand1().getColumn().getType());
                 colsMap.put(k, col);
             }
             k = p.getOperand2().getColumn().toStringData();
             if (! colsMap.containsKey(k)) {
-                ParsedColumnLight<?> col = new ParsedColumnLight<>(p.getOperand2().getColumn());
+                ParsedColumnLight<?> col = new ParsedColumnLight<>(p.getOperand2().getColumn(), p.getOperand2().getColumn().getType());
                 colsMap.put(k, col);
             }
         }

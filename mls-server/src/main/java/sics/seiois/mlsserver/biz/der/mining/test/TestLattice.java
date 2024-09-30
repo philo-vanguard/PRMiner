@@ -89,6 +89,10 @@ public class TestLattice {
             // input.buildPLIs_col();
             input.buildPLIs_col_OnSpark(1000000);
 
+            int index_null_string = input.getIndexNullString();
+            int index_null_double = input.getIndexNullDouble();
+            int index_null_long = input.getIndexNullLong();
+
             // load ML Selection
             MLSelection mlsel = new MLSelection();
             mlsel.configure(mlsel_file);
@@ -121,7 +125,8 @@ public class TestLattice {
             long runTime = System.currentTimeMillis();
             ParallelRuleDiscovery parallelRuleDiscovery = new ParallelRuleDiscovery(allPredicates, K, maxTupleNum,
                     support, (float) errorThreshold, maxOneRelationNum, input, allCount,
-                    w_supp, w_conf, w_diver, w_succ, w_sub, ifPrune);
+                    w_supp, w_conf, w_diver, w_succ, w_sub, ifPrune,
+                    index_null_string, index_null_double, index_null_long);
 
 
             parallelRuleDiscovery.levelwiseRuleDiscoveryLocal();

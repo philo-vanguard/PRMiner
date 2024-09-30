@@ -330,7 +330,8 @@ public class EvidenceGenerateMain {
         if (ifRL == 0) {
             parallelRuleDiscoverySampling = new ParallelRuleDiscoverySampling(allPredicates, 10000, maxTupleNum,
                     support, (float)confidence, maxOneRelationNum, reeFinderEvidSet.getInput(), allCount,
-                    1, 1, 1, 1, 1, 0, if_conf_filter, conf_filter_thr, if_cluster_workunits, filter_enum_number);
+                    1, 1, 1, 1, 1, 0, if_conf_filter, conf_filter_thr, if_cluster_workunits, filter_enum_number,
+                    reeFinderEvidSet.getIndex_null_string(), reeFinderEvidSet.getIndex_null_double(), reeFinderEvidSet.getIndex_null_long());
         } else {
             int ifOnlineTrainRL = Integer.valueOf(RuntimeParamUtil.getRuntimeParam(spark.conf().get("runtimeParam"),"ifOnlineTrainRL"));
             int ifOfflineTrainStage = Integer.valueOf(RuntimeParamUtil.getRuntimeParam(spark.conf().get("runtimeParam"),"ifOfflineTrainStage"));
@@ -350,7 +351,8 @@ public class EvidenceGenerateMain {
                     support, (float)confidence, maxOneRelationNum, reeFinderEvidSet.getInput(), allCount,
                     1, 1, 1, 1, 1, 0, if_conf_filter, conf_filter_thr, if_cluster_workunits, filter_enum_number,
                     ifRL, ifOnlineTrainRL, ifOfflineTrainStage, PI_path, RL_code_path, N, DeltaL,
-                    learning_rate, reward_decay, e_greedy, replace_target_iter, memory_size, batch_size);
+                    learning_rate, reward_decay, e_greedy, replace_target_iter, memory_size, batch_size,
+                    reeFinderEvidSet.getIndex_null_string(), reeFinderEvidSet.getIndex_null_double(), reeFinderEvidSet.getIndex_null_long());
         }
 
         // rule discovery
@@ -496,7 +498,8 @@ public class EvidenceGenerateMain {
 
         InputLight inputLight = new InputLight(reeFinderEvidSet.getInput());
         ConstantRecovery constantRecovery = new ConstantRecovery(reesStart, allPredicates, maxTupleNum, inputLight,
-                support, (float)confidence, maxOneRelationNum, allCount, if_cluster_workunits);
+                support, (float)confidence, maxOneRelationNum, allCount, if_cluster_workunits,
+                reeFinderEvidSet.getIndex_null_string(), reeFinderEvidSet.getIndex_null_double(), reeFinderEvidSet.getIndex_null_long());
         String taskId = request.getTaskId();
         long startMineTime = System.currentTimeMillis();
         constantRecovery.recovery(taskId, spark, sparkContextConfig);
@@ -632,7 +635,8 @@ public class EvidenceGenerateMain {
         if (ifDQN == false) {
             parallelRuleDiscovery = new ParallelRuleDiscoverySampling(allPredicates, K, maxTupleNum,
                     support, (float)confidence, maxOneRelationNum, reeFinderEvidSet.getInput(), allCount,
-                    w_supp, w_conf, w_diver, w_succ, w_sub, ifPrune, if_conf_filter, conf_filter_thr, if_cluster_workunits, filter_enum_number);
+                    w_supp, w_conf, w_diver, w_succ, w_sub, ifPrune, if_conf_filter, conf_filter_thr, if_cluster_workunits, filter_enum_number,
+                    reeFinderEvidSet.getIndex_null_string(), reeFinderEvidSet.getIndex_null_double(), reeFinderEvidSet.getIndex_null_long());
         } else {
             String DQNModelFile = RuntimeParamUtil.getRuntimeParam(spark.conf().get("runtimeParam"), "DQNModelFile");
             float DQNThreshold = Float.valueOf(RuntimeParamUtil.getRuntimeParam(spark.conf().get("runtimeParam"), "DQNThreshold"));
@@ -641,7 +645,7 @@ public class EvidenceGenerateMain {
             parallelRuleDiscovery = new ParallelRuleDiscoverySampling(allPredicates, K, maxTupleNum,
                     support, (float)confidence, maxOneRelationNum, reeFinderEvidSet.getInput(), allCount,
                     w_supp, w_conf, w_diver, w_succ, w_sub, ifPrune, if_conf_filter, conf_filter_thr, if_cluster_workunits, filter_enum_number,
-                    ifDQN, dqn);
+                    ifDQN, dqn, reeFinderEvidSet.getIndex_null_string(), reeFinderEvidSet.getIndex_null_double(), reeFinderEvidSet.getIndex_null_long());
 
 //            int ifOnlineTrainRL = Integer.valueOf(RuntimeParamUtil.getRuntimeParam(spark.conf().get("runtimeParam"),"ifOnlineTrainRL"));
 //            int ifOfflineTrainStage = Integer.valueOf(RuntimeParamUtil.getRuntimeParam(spark.conf().get("runtimeParam"),"ifOfflineTrainStage"));
@@ -680,7 +684,7 @@ public class EvidenceGenerateMain {
             if (ree == null) {
                 continue;
             }
-            timeInfo.append("Rule : ").append(ree.toString()).append(", supp: ").append(ree.getSupport()).append(", conf:").append(ree.getConfidence()).append("\n");
+            timeInfo.append("Rule : ").append(ree.toStringOutput()).append(", supp: ").append(ree.getSupport()).append(", conf:").append(ree.getConfidence()).append("\n");
         }
 
         String outTxtPath = PredicateConfig.MLS_TMP_HOME + taskId + "/rule_all/" +  outputResultFile; //"experiment_results";

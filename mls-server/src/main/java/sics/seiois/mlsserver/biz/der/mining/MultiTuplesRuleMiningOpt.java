@@ -32,8 +32,13 @@ public class MultiTuplesRuleMiningOpt {
     private static int BATCH_TUPLE_NUM = 1000;
     private static int ENUMERATE_RATIO = 100000;
 
+    private int index_null_string;
+    private int index_null_double;
+    private int index_null_long;
+
     public MultiTuplesRuleMiningOpt(int max_num_tuples, InputLight inputLight, long support, float confidence,
-                                    long maxOneRelationNum, long allCount, HashMap<String, Long> tupleNumberRelations) {
+                                    long maxOneRelationNum, long allCount, HashMap<String, Long> tupleNumberRelations,
+                                    int index_null_string, int index_null_double, int index_null_long) {
         this.max_num_tuples = max_num_tuples;
         this.inputLight = inputLight;
         this.support = support;
@@ -41,6 +46,9 @@ public class MultiTuplesRuleMiningOpt {
         this.maxOneRelationNum = maxOneRelationNum;
         this.allCount = allCount;
         this.tupleNumberRelations = tupleNumberRelations;
+        this.index_null_string = index_null_string;
+        this.index_null_double = index_null_double;
+        this.index_null_long = index_null_long;
     }
 
     private void updateHyperCube(Predicate pBegin, HyperCube hyperCube, ArrayList<Predicate> currentSetB, ArrayList<Predicate> rhss_arr, int[] pids, int indexUsed, int indexNotUsed) {
@@ -385,15 +393,17 @@ public class MultiTuplesRuleMiningOpt {
 //    }
 
 
-    public Map<TIntArrayList, List<Integer>> createHashMap(TIntArrayList list, List<Predicate> current, int pid, boolean isLeft) {
+    public Map<TIntArrayList, List<Integer>> createHashMap(TIntArrayList list, List<Predicate> current, int pid, boolean isLeft, boolean same_pid) {
         Map<TIntArrayList, List<Integer>> hashMap = new HashMap<>();
-        boolean ifconst = true;
+        boolean ifconst;
         for (int line = 0; line < list.size(); line++) {
+            ifconst = true;
             TIntArrayList xValue = new TIntArrayList(current.size(), -1);
             for (int ppid = 0; ppid < current.size(); ppid++) {
                 // 遍历所有谓词
                 Predicate currp = current.get(ppid);
                 int v = 0;
+                Class<?> type;
 //                if (currp.isConstant()) {
 //                    if (currp.getIndex1() == 0) {
 //                        v = currp.getOperand1().getColumnLight().getValueInt(pids[currp.getIndex1()], line);
@@ -413,10 +423,25 @@ public class MultiTuplesRuleMiningOpt {
 //                }
                 if (isLeft) {
                     v = currp.getOperand1().getColumnLight().getValueInt(pid, line);
+                    type = currp.getOperand1().getColumnLight().getType();
                 } else {
                     v = currp.getOperand2().getColumnLight().getValueInt(pid, line);
+                    type = currp.getOperand2().getColumnLight().getType();
                 }
                 xValue.add(v);
+                // remove null value
+                if (v == this.index_null_string && type == String.class) {
+                    ifconst = false;
+                    break;
+                }
+                if (v == this.index_null_double && type == Double.class) {
+                    ifconst = false;
+                    break;
+                }
+                if (v == this.index_null_long && type == Long.class) {
+                    ifconst = false;
+                    break;
+                }
             }
             if (ifconst) {
                 hashMap.putIfAbsent(xValue, new ArrayList<>());
@@ -636,18 +661,19 @@ public class MultiTuplesRuleMiningOpt {
         int[] pids = unitSet.getPids();
 
         /* if partition ID of t_0 is larger than partition ID of t_1, then discard it */
-        if (pids[pBegin.getIndex1()] > pids[pBegin.getIndex2()]) {
-            for(WorkUnit unit : units) {
-                ArrayList<Predicate> currentList = new ArrayList<>();
-                for (Predicate p : unit.getCurrrent()) {
-                    currentList.add(p);
-                }
-                Message message = new Message(currentList, 0, 0, 0);
-                // add into a list of messages
-                messages.add(message);
-            }
-            return messages;
-        }
+        // not right!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//        if (pids[pBegin.getIndex1()] > pids[pBegin.getIndex2()]) {
+//            for(WorkUnit unit : units) {
+//                ArrayList<Predicate> currentList = new ArrayList<>();
+//                for (Predicate p : unit.getCurrrent()) {
+//                    currentList.add(p);
+//                }
+//                Message message = new Message(currentList, 0, 0, 0);
+//                // add into a list of messages
+//                messages.add(message);
+//            }
+//            return messages;
+//        }
 
         PredicateSet sameSet = unitSet.getSameSet();
         ArrayList<Predicate> samePs = new ArrayList<>();
@@ -675,8 +701,8 @@ public class MultiTuplesRuleMiningOpt {
         for (Predicate p : currrentPs) {
             if (p.isConstant()) {
                 // the map of "constantPs" already distinguishes t0 and t1
-                constantPs.putIfAbsent(p.getOperand1().toString(), new ArrayList<>());
-                constantPs.get(p.getOperand1().toString()).add(p);
+                constantPs.putIfAbsent(p.getOperand1().toString_(p.getIndex1()), new ArrayList<>());
+                constantPs.get(p.getOperand1().toString_(p.getIndex1())).add(p);
                 continue;
             }
             if (sameSet.containsPredicate(p)) {
@@ -707,8 +733,9 @@ public class MultiTuplesRuleMiningOpt {
         }
 
         TIntArrayList _list = pBegin.getOperand1().getColumnLight().getValueIntList(unitSet.getPids()[pBegin.getIndex1()]);
+        boolean same_pid = unitSet.getPids()[pBegin.getIndex1()] == unitSet.getPids()[pBegin.getIndex2()];
         // Key is the values of attributes, List<Integer> is the tuple IDs that satisfy the "key"
-        Map<TIntArrayList, List<Integer>> leftMap = createHashMap(_list, samePs, unitSet.getPids()[pBegin.getIndex1()], true);
+        Map<TIntArrayList, List<Integer>> leftMap = createHashMap(_list, samePs, unitSet.getPids()[pBegin.getIndex1()], true, same_pid);
         /*
         if(pids[pBegin.getIndex1()] == pids[pBegin.getIndex2()]) {
             for (Map.Entry<TIntArrayList, List<Integer>> entry : leftMap.entrySet()) {
@@ -728,8 +755,11 @@ public class MultiTuplesRuleMiningOpt {
          */
 
         _list = pBegin.getOperand2().getColumnLight().getValueIntList(unitSet.getPids()[pBegin.getIndex2()]);
-        Map<TIntArrayList, List<Integer>> rightMap = createHashMap(_list, samePs, unitSet.getPids()[pBegin.getIndex2()], false);
+        Map<TIntArrayList, List<Integer>> rightMap = createHashMap(_list, samePs, unitSet.getPids()[pBegin.getIndex2()], false, same_pid);
         for (Map.Entry<TIntArrayList, List<Integer>> entry : leftMap.entrySet()) {
+            if (same_pid && entry.getValue().size() == 1) { // for predicates in form of t0.A=t1.A; and note that here we only consider non-constant predicates for the map
+                continue;
+            }
             TIntArrayList key = entry.getKey();
             if (rightMap.containsKey(key)) {
                 this.updateHyperCubeMap1(hyperCubes, unitSet, currentSet, entry.getValue(), constantPs, pids, key, 0);
@@ -807,7 +837,7 @@ public class MultiTuplesRuleMiningOpt {
 
 //        log.info(">>>> line count : {}", lines.size());
 //        finish:
-        int countLine = 0;
+//        int countLine = 0;
         for (int lid = 0; lid < lines.size(); lid++) {
             int line = lines.get(lid);
             //遍历常数谓词
@@ -828,14 +858,12 @@ public class MultiTuplesRuleMiningOpt {
                     for (Predicate curr : entry.getValue()) {
                         if (c != curr.getConstantInt().intValue()) {
                             // index is the script of work units
-                            for (Integer index : prdMap.get(curr.toString())) {
+                            for (Integer index : prdMap.get(curr.getOperand1().toString_(curr.getIndex1()))) {
 //                            log.info(">>>>error index: {}", index);
                                 ifConst[index.intValue()] = false;
                             }
                         }
                     }
-                } else {
-                    continue;
                 }
             }
 
@@ -934,7 +962,7 @@ public class MultiTuplesRuleMiningOpt {
                 xValues[index] = xValue;
                 ifConst[index] = true;
 
-                countLine++;
+//                countLine++;
             }
 
         }

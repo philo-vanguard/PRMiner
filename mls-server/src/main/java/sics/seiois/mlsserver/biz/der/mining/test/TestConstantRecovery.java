@@ -167,6 +167,10 @@ public class TestConstantRecovery {
             // input.buildPLIs_col();
             input.buildPLIs_col_OnSpark(1000000);
 
+            int index_null_string = input.getIndexNullString();
+            int index_null_double = input.getIndexNullDouble();
+            int index_null_long = input.getIndexNullLong();
+
             // load ML Selection
             MLSelection mlsel = new MLSelection();
             mlsel.configure(mlsel_file);
@@ -202,7 +206,8 @@ public class TestConstantRecovery {
             DenialConstraintSet reesStart = loadREEs(ree_sample_file, input);
 
             ConstantRecovery constantRecovery = new ConstantRecovery(reesStart, allPredicates, maxTupleNum, new InputLight(input),
-                    support, (float)errorThreshold, maxOneRelationNum, allCount, if_cluster_workunits);
+                    support, (float)errorThreshold, maxOneRelationNum, allCount, if_cluster_workunits,
+                    index_null_string, index_null_double, index_null_long);
             constantRecovery.recoveryLocal();
             // Get rules
             DenialConstraintSet rees = constantRecovery.getREEsResults();

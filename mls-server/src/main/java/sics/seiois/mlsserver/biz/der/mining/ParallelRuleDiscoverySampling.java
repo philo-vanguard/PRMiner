@@ -115,6 +115,10 @@ public class ParallelRuleDiscoverySampling {
     private HashMap<String, Integer> predicateDQNHashIDs = null;
     private boolean ifDQN;
 
+    private int index_null_string;
+    private int index_null_double;
+    private int index_null_long;
+
     // set the DQNMLP
     void loadDQNModel(MLPFilterClassifier dqnmlp) throws IOException {
         if (dqnmlp == null) {
@@ -218,7 +222,8 @@ public class ParallelRuleDiscoverySampling {
                                          float confidence, long maxOneRelationNum, Input input, long allCount,
                                          float w_1, float w_2, float w_3, float w_4, float w_5, int ifPrune,
                                          int if_conf_filter, float conf_filter_thr, int if_cluster_workunits,
-                                         int filter_enum_number) {
+                                         int filter_enum_number,
+                                         int index_null_string, int index_null_double, int index_null_long) {
         this.allPredicates = predicates;
         this.K = K;
         this.maxTupleNum = maxTupleNum;
@@ -237,6 +242,13 @@ public class ParallelRuleDiscoverySampling {
         this.if_cluster_workunits = if_cluster_workunits;
 
         this.filter_enum_number = filter_enum_number;
+
+        this.index_null_string = index_null_string;
+        this.index_null_double = index_null_double;
+        this.index_null_long = index_null_long;
+        logger.info("index_null_string: {}", index_null_string);
+        logger.info("index_null_double: {}", index_null_double);
+        logger.info("index_null_long: {}", index_null_long);
 
         // set support for each predicate;
         HashMap<String, HashMap<Integer, Long>> statistic = new HashMap<>();
@@ -312,10 +324,12 @@ public class ParallelRuleDiscoverySampling {
                                          float confidence, long maxOneRelationNum, Input input, long allCount,
                                          float w_1, float w_2, float w_3, float w_4, float w_5, int ifPrune,
                                          int if_conf_filter, float conf_filter_thr, int if_cluster_workunits, int filter_enum_number,
-                                         boolean ifDQN, MLPFilterClassifier dqnmlp) throws IOException {
+                                         boolean ifDQN, MLPFilterClassifier dqnmlp,
+                                         int index_null_string, int index_null_double, int index_null_long) throws IOException {
         this(predicates, K, maxTupleNum, support,
                 confidence, maxOneRelationNum, input, allCount,
-                w_1, w_2, w_3, w_4, w_5, ifPrune, if_conf_filter, conf_filter_thr, if_cluster_workunits, filter_enum_number);
+                w_1, w_2, w_3, w_4, w_5, ifPrune, if_conf_filter, conf_filter_thr, if_cluster_workunits, filter_enum_number,
+                index_null_string, index_null_double, index_null_long);
 
         this.ifDQN = ifDQN;
         this.loadDQNModel(dqnmlp);
@@ -326,10 +340,12 @@ public class ParallelRuleDiscoverySampling {
                                          float confidence, long maxOneRelationNum, Input input, long allCount,
                                          float w_1, float w_2, float w_3, float w_4, float w_5, int ifPrune,
                                          int if_conf_filter, float conf_filter_thr, int if_cluster_workunits, int filter_enum_number,
-                                         boolean ifDQN, MLPFilterClassifier dqnmlp, String predicateHashIDsFile) throws IOException {
+                                         boolean ifDQN, MLPFilterClassifier dqnmlp, String predicateHashIDsFile,
+                                         int index_null_string, int index_null_double, int index_null_long) throws IOException {
         this(predicates, K, maxTupleNum, support,
                 confidence, maxOneRelationNum, input, allCount,
-                w_1, w_2, w_3, w_4, w_5, ifPrune, if_conf_filter, conf_filter_thr, if_cluster_workunits, filter_enum_number);
+                w_1, w_2, w_3, w_4, w_5, ifPrune, if_conf_filter, conf_filter_thr, if_cluster_workunits, filter_enum_number,
+                index_null_string, index_null_double, index_null_long);
 
         this.ifDQN = ifDQN;
         this.loadDQNModel(dqnmlp, predicateHashIDsFile);
@@ -342,10 +358,12 @@ public class ParallelRuleDiscoverySampling {
                                          float w_1, float w_2, float w_3, float w_4, float w_5, int ifPrune,
                                          int if_conf_filter, float conf_filter_thr, int if_cluster_workunits, int filter_enum_number,
                                          boolean ifNN, String tokenToIDFile, String interestingnessModelFile, String filterRegressionFile,
-                                         FileSystem hdfs) throws IOException {
+                                         FileSystem hdfs,
+                                         int index_null_string, int index_null_double, int index_null_long) throws IOException {
         this(predicates, K, maxTupleNum, support,
                 confidence, maxOneRelationNum, input, allCount,
-                w_1, w_2, w_3, w_4, w_5, ifPrune, if_conf_filter, conf_filter_thr, if_cluster_workunits, filter_enum_number);
+                w_1, w_2, w_3, w_4, w_5, ifPrune, if_conf_filter, conf_filter_thr, if_cluster_workunits, filter_enum_number,
+                index_null_string, index_null_double, index_null_long);
 
         // whether use NN rule interestingness model
         this.ifNN = ifNN;
@@ -360,10 +378,12 @@ public class ParallelRuleDiscoverySampling {
                                          int ifRL, int ifOnlineTrainRL, int ifOfflineTrainStage,
                                          String PI_path, String RL_code_path, int N, int DeltaL,
                                          float learning_rate, float reward_decay, float e_greedy,
-                                         int replace_target_iter, int memory_size, int batch_size) {
+                                         int replace_target_iter, int memory_size, int batch_size,
+                                         int index_null_string, int index_null_double, int index_null_long) {
         this(predicates, K, maxTupleNum, support,
                 confidence, maxOneRelationNum, input, allCount,
-                w_1, w_2, w_3, w_4, w_5, ifPrune, if_conf_filter, conf_filter_thr, if_cluster_workunits, filter_enum_number);
+                w_1, w_2, w_3, w_4, w_5, ifPrune, if_conf_filter, conf_filter_thr, if_cluster_workunits, filter_enum_number,
+                index_null_string, index_null_double, index_null_long);
         this.MEM = new ArrayList<>();
         this.ifRL = ifRL;
         this.ifOnlineTrainRL = ifOnlineTrainRL;
@@ -385,11 +405,19 @@ public class ParallelRuleDiscoverySampling {
         this.batch_size = batch_size;
     }
 
-    private ArrayList<Predicate> applicationDrivenSelection(List<Predicate> predicates) {
+    private ArrayList<Predicate> applicationDrivenSelection(List<Predicate> all_predicates) {
         int whole_num_nonCons = 0;
         int whole_num_cons = 0;
-        for (Predicate p : predicates) {
-            if (p.isConstant()) {
+        List<Predicate> predicates = new ArrayList<>();
+
+        for (Predicate rhs : all_predicates) {
+            // when maxTupleNum <= 2, we do not consider t1 constant RHS, since it is redundant due to the symmetry!
+            if (this.maxTupleNum <= 2 && rhs.isConstant() && rhs.getIndex1() == 1) {
+                continue;
+            }
+            predicates.add(rhs);
+
+            if (rhs.isConstant()) {
                 whole_num_cons++;
             } else {
                 whole_num_nonCons++;
@@ -705,8 +733,12 @@ public class ParallelRuleDiscoverySampling {
             if (!p.isConstant()) {
                 continue;
             }
-            if (p.getOperand1().getColumnLight().getUniqueConstantNumber() <= this.filter_enum_number ||
-                p.getOperand2().getColumnLight().getUniqueConstantNumber() <= this.filter_enum_number) {
+//            if (p.getOperand1().getColumnLight().getUniqueConstantNumber() <= this.filter_enum_number ||
+//                p.getOperand2().getColumnLight().getUniqueConstantNumber() <= this.filter_enum_number) {
+//                removePredicates.add(p);
+//            }
+            if (p.getOperand1().getColumnLight().getUniqueConstantNumberWithoutOnlyOneExistence() <= this.filter_enum_number ||
+                    p.getOperand2().getColumnLight().getUniqueConstantNumberWithoutOnlyOneExistence() <= this.filter_enum_number) {
                 removePredicates.add(p);
             }
         }
@@ -717,14 +749,33 @@ public class ParallelRuleDiscoverySampling {
         }
     }
 
+    private void removeNonEnumPredicates(List<Predicate> allPredicates) {
+        ArrayList<Predicate> removePredicates = new ArrayList<>();
+        for (Predicate p : allPredicates) {
+            // remove predicates with attribute such as id
+            if (p.getOperand1().getColumnLight().getUniqueConstantNumber() > this.allCount * 0.8 ||
+                    p.getOperand2().getColumnLight().getUniqueConstantNumber() > this.allCount * 0.8) {
+                removePredicates.add(p);
+            }
+        }
+        logger.info("#### Filter non-enum Constant Predicates size: {}", removePredicates.size());
+        for (Predicate p : removePredicates) {
+            allPredicates.remove(p);
+        }
+    }
+
     private void removeEnumPredicates(List<Predicate> allPredicates) {
         ArrayList<Predicate> removePredicates = new ArrayList<>();
         for (Predicate p : allPredicates) {
             if (!p.isConstant()) {
                 continue;
             }
-            if (p.getOperand1().getColumnLight().getUniqueConstantNumber() <= this.filter_enum_number ||
-                p.getOperand2().getColumnLight().getUniqueConstantNumber() <= this.filter_enum_number) {
+//            if (p.getOperand1().getColumnLight().getUniqueConstantNumber() <= this.filter_enum_number ||
+//                p.getOperand2().getColumnLight().getUniqueConstantNumber() <= this.filter_enum_number) {
+//                removePredicates.add(p);
+//            }
+            if (p.getOperand1().getColumnLight().getUniqueConstantNumberWithoutOnlyOneExistence() <= this.filter_enum_number ||
+                    p.getOperand2().getColumnLight().getUniqueConstantNumberWithoutOnlyOneExistence() <= this.filter_enum_number) {
                 removePredicates.add(p);
             }
         }
@@ -781,20 +832,16 @@ public class ParallelRuleDiscoverySampling {
 
         this.prepareAllPredicatesMultiTuples();
 
-        List<Predicate> tmp_allPredicates = new ArrayList<>();
-        for (Predicate p : this.allPredicates) {
-            tmp_allPredicates.add(p);
-        }
-        removeEnumPredicates(tmp_allPredicates);
-        ArrayList<Predicate> applicationRHSs = this.applicationDrivenSelection(tmp_allPredicates);
+        ArrayList<Predicate> applicationRHSs = this.applicationDrivenSelection(this.allPredicates);
+
+        this.removeNonEnumPredicates(this.allPredicates);
+
+        this.removeEnumPredicates(this.allPredicates, this.allExistPredicates);
 
         // remove predicates that are irrelevant to RHSs
         if (this.maxTupleNum <= 2) {
             filterIrrelevantPredicates(applicationRHSs, this.allPredicates);
         }
-
-        // remove constant predicates of enumeration type
-        removeEnumPredicates(this.allPredicates, this.allExistPredicates);
 
         logger.info("Parallel Mining with Predicates size {} and Predicates {}", this.allPredicates.size(), this.allPredicates);
         int cpsize = 0;
@@ -1425,7 +1472,8 @@ public class ParallelRuleDiscoverySampling {
     public List<Message> run(ArrayList<WorkUnit> workUnits, String taskId,
                              JavaSparkContext sc, HashMap<String, Long> tupleNumberRelations, Broadcast<PredicateSetAssist> bcpsAssist) {
         BroadcastObj broadcastObj = new BroadcastObj(this.maxTupleNum, this.inputLight, this.support, this.confidence,
-                this.maxOneRelationNum, tupleNumberRelations);
+                this.maxOneRelationNum, tupleNumberRelations,
+                this.index_null_string, this.index_null_double, this.index_null_long);
         // broadcast data
         // ... left for future
 
@@ -1543,10 +1591,12 @@ public class ParallelRuleDiscoverySampling {
                             }
                             List<Predicate> rhs = validConsRuleMap.get(lhs);
 
-                            for (Predicate p : rhs) {
-                                if (unit.getRHSs().containsPredicate(p)) {
-                                    unit.getRHSs().remove(p);
-                                    logger.info(">>>> test cut: {}", p);
+                            if (rhs != null) {
+                                for (Predicate p : rhs) {
+                                    if (unit.getRHSs().containsPredicate(p)) {
+                                        unit.getRHSs().remove(p);
+                                        logger.info(">>>> test cut: {}", p);
+                                    }
                                 }
                             }
                         }
@@ -1590,7 +1640,8 @@ public class ParallelRuleDiscoverySampling {
 //            logger.info(">>>Will do multiTuplesRuleMining! {} | {}", currentList, rhsList);
             MultiTuplesRuleMiningOpt multiTuplesRuleMining = new MultiTuplesRuleMiningOpt(bobj.getMax_num_tuples(),
                     bobj.getInputLight(), bobj.getSupport(), bobj.getConfidence(), bobj.getMaxOneRelationNum(),
-                    unitSet.getAllCount(), bobj.getTupleNumberRelations());
+                    unitSet.getAllCount(), bobj.getTupleNumberRelations(),
+                    bobj.getIndex_null_string(), bobj.getIndex_null_double(), bobj.getIndex_null_long());
 
 //            TIntArrayList _list1 = pBegin.getOperand1().getColumnLight().getValueIntList(unitSet.getPids()[pBegin.getIndex1()]);
 //            TIntArrayList _list2 = pBegin.getOperand2().getColumnLight().getValueIntList(unitSet.getPids()[pBegin.getIndex2()]);
@@ -2015,12 +2066,12 @@ public class ParallelRuleDiscoverySampling {
         for (Predicate p : this.allPredicates) {
             String k = p.getOperand1().getColumn().toStringData();
             if (!colsMap.containsKey(k)) {
-                ParsedColumnLight<?> col = new ParsedColumnLight<>(p.getOperand1().getColumn());
+                ParsedColumnLight<?> col = new ParsedColumnLight<>(p.getOperand1().getColumn(), p.getOperand1().getColumn().getType());
                 colsMap.put(k, col);
             }
             k = p.getOperand2().getColumn().toStringData();
             if (!colsMap.containsKey(k)) {
-                ParsedColumnLight<?> col = new ParsedColumnLight<>(p.getOperand2().getColumn());
+                ParsedColumnLight<?> col = new ParsedColumnLight<>(p.getOperand2().getColumn(), p.getOperand2().getColumn().getType());
                 colsMap.put(k, col);
             }
         }
@@ -2127,6 +2178,7 @@ public class ParallelRuleDiscoverySampling {
 //            logger.info("Transform rule {} with support {} and confidence {}", ree, supp, conf);
             // compute the interestingness score of each REE rule
             double score = this.computeInterestingness(ree);
+//            double score = 2 * supp * 1.0 / allCount / allCount + conf;
             ree.setInterestingnessScore(score);
             rees.add(ree);
         }
@@ -2136,11 +2188,83 @@ public class ParallelRuleDiscoverySampling {
         return rees;
     }
 
+    // check whether t1 only exists once and in the non-constant predicates. remove rules like "t0.A == t1.A ^ t0.B == 0 -> t0.D == 0"
+    private boolean isReasonableREE(DenialConstraint ree) {
+        boolean t0_non_constant = false;
+        boolean t1_non_constant = false;
+        boolean t0_constant = false;
+        boolean t1_constant = false;
+        for (Predicate p : ree.getPredicateSet()) {
+            if (p.isConstant()) {
+                if (p.getIndex1() == 0) {
+                    t0_constant = true;
+                }
+                if (p.getIndex1() == 1) {
+                    t1_constant = true;
+                }
+            } else {
+                t0_non_constant = true;
+                t1_non_constant = true;
+            }
+        }
+        Predicate rhs = ree.getRHS();
+        if (rhs.isConstant()) {
+            if (rhs.getIndex1() == 0) {
+                t0_constant = true;
+            }
+            if (rhs.getIndex1() == 1) {
+                t1_constant = true;
+            }
+        } else {
+            t0_non_constant = true;
+            t1_non_constant = true;
+        }
+        boolean valid = true;
+        if (ree.getRHS().isConstant()) {
+            valid = t0_constant && t1_constant && t0_non_constant && t1_non_constant;
+        }
+//        logger.info("{}, {}", ree.toStringOutput(), valid);
+        return valid;
+    }
+
+    // Remove rules like "t0.A == t1.A -> t0.B == c"
+    private boolean isMeaninglessREE(DenialConstraint ree) {
+        boolean isMeaningless = false;
+        if (ree.getPredicateSet().size() == 1) {
+            for (Predicate p_X : ree.getPredicateSet()) {
+                if (!p_X.isConstant() && ree.getRHS().isConstant()) {
+                    isMeaningless = true;
+                }
+            }
+        }
+        return isMeaningless;
+    }
+
+    private boolean checkUnreasonableREE_new(DenialConstraint ree) {
+        if (ree.getPredicateSet().size() == 2) {
+            for (Predicate p : ree.getPredicateSet()) {
+                if (!p.isConstant() && p.getOperand1().getColumnLight().getName().equals("research_interests")) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     /*
         store the current top-K interesting REEs
      */
     private void maintainTopKRules(DenialConstraintSet rees) {
         for (DenialConstraint ree : rees) {
+            if (!isReasonableREE(ree)) {
+                continue;
+            }
+            if (isMeaninglessREE(ree)) {
+                continue;
+            }
+//            if (!checkUnreasonableREE_new(ree)) { // for case study
+//                continue;
+//            }
             topKREEsTemp.add(ree);
         }
         // score the current top-K REEs and their corresponding interesting scores
@@ -2212,15 +2336,20 @@ public class ParallelRuleDiscoverySampling {
         }
         for (Message message : messages) {
             PredicateSet kkps = message.getCurrentSet(); //new PredicateSet();
-            for (Predicate validRHS : message.getValidRHSs()) {
-                PredicateSet temp = new PredicateSet(kkps);
-                temp.add(validRHS);
-                if (this.validXRHSs.containsKey(temp.getBitset())) {
-                    this.validXRHSs.get(temp.getBitset()).add(validRHS);
-                } else {
-                    ArrayList<Predicate> arr = new ArrayList<>();
-                    arr.add(validRHS);
-                    this.validXRHSs.put(temp.getBitset(), arr);
+            for (int i = 0; i < message.getValidRHSs().size(); i++) {
+                Predicate validRHS = message.getValidRHSs().get(i);
+                double conf = message.getConfidences().get(i);
+                // Lemma 3.2 in paper TANE
+                if (conf == 1.0) {
+                    PredicateSet temp = new PredicateSet(kkps);
+                    temp.add(validRHS);
+                    if (this.validXRHSs.containsKey(temp.getBitset())) {
+                        this.validXRHSs.get(temp.getBitset()).add(validRHS);
+                    } else {
+                        ArrayList<Predicate> arr = new ArrayList<>();
+                        arr.add(validRHS);
+                        this.validXRHSs.put(temp.getBitset(), arr);
+                    }
                 }
                 // add valid RHSs -- new ADDED, should be re-test and re-think !!!
                 if (this.validXRHSs.containsKey(kkps.getBitset())) {
@@ -3062,21 +3191,16 @@ public class ParallelRuleDiscoverySampling {
 
         this.prepareAllPredicatesMultiTuples();
 
-        List<Predicate> tmp_allPredicates = new ArrayList<>();
-        for (Predicate p : this.allPredicates) {
-            tmp_allPredicates.add(p);
-        }
-        // remove constant predicates of enumeration type for RHS
-        // removeEnumPredicates(tmp_allPredicates);
-        ArrayList<Predicate> applicationRHSs = this.applicationDrivenSelection(tmp_allPredicates);
+        ArrayList<Predicate> applicationRHSs = this.applicationDrivenSelection(this.allPredicates);
+
+        this.removeNonEnumPredicates(this.allPredicates);
+
+        this.removeEnumPredicates(this.allPredicates, this.allExistPredicates);
 
         // remove predicates that are irrelevant to RHSs
         if (this.maxTupleNum <= 2) {
             filterIrrelevantPredicates(applicationRHSs, this.allPredicates);
         }
-
-        // remove constant predicates of enumeration type for X
-        removeEnumPredicates(this.allPredicates, this.allExistPredicates);
 
         int cpsize = 0;
         int psize = 0;
@@ -3674,7 +3798,8 @@ public class ParallelRuleDiscoverySampling {
 
 
                 MultiTuplesRuleMiningOpt multiTuplesRuleMining = new MultiTuplesRuleMiningOpt(this.maxTupleNum,
-                        this.inputLight, this.support, this.confidence, maxOneRelationNum, allCount, tupleNumberRelations);
+                        this.inputLight, this.support, this.confidence, maxOneRelationNum, allCount, tupleNumberRelations,
+                        this.index_null_string, this.index_null_double, this.index_null_long);
 
                 ArrayList<Predicate> current = new ArrayList<>();
                 for (Predicate p : task.getCurrrent()) {
@@ -3823,7 +3948,8 @@ public class ParallelRuleDiscoverySampling {
 
 
                 MultiTuplesRuleMiningOpt multiTuplesRuleMining = new MultiTuplesRuleMiningOpt(this.maxTupleNum,
-                        this.inputLight, this.support, this.confidence, maxOneRelationNum, allCount, tupleNumberRelations);
+                        this.inputLight, this.support, this.confidence, maxOneRelationNum, allCount, tupleNumberRelations,
+                        this.index_null_string, this.index_null_double, this.index_null_long);
 
                 List<Message> messages = multiTuplesRuleMining.validationMap1(unitSet, pBegin);
 

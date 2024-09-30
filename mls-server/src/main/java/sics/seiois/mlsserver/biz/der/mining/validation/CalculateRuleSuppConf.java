@@ -52,6 +52,10 @@ public class CalculateRuleSuppConf {
 
     private HashMap<Integer, Predicate> idx_predicates;
 
+    private int index_null_string;
+    private int index_null_double;
+    private int index_null_long;
+
 
     private ArrayList<Predicate> applicationDrivenSelection(List<Predicate> predicates) {
         int whole_num_nonCons = 0;
@@ -282,12 +286,12 @@ public class CalculateRuleSuppConf {
         for (Predicate p : this.allPredicates) {
             String k = p.getOperand1().getColumn().toStringData();
             if (!colsMap.containsKey(k)) {
-                ParsedColumnLight<?> col = new ParsedColumnLight<>(p.getOperand1().getColumn());
+                ParsedColumnLight<?> col = new ParsedColumnLight<>(p.getOperand1().getColumn(), p.getOperand1().getColumn().getType());
                 colsMap.put(k, col);
             }
             k = p.getOperand2().getColumn().toStringData();
             if (!colsMap.containsKey(k)) {
-                ParsedColumnLight<?> col = new ParsedColumnLight<>(p.getOperand2().getColumn());
+                ParsedColumnLight<?> col = new ParsedColumnLight<>(p.getOperand2().getColumn(), p.getOperand2().getColumn().getType());
                 colsMap.put(k, col);
             }
         }
@@ -474,6 +478,10 @@ public class CalculateRuleSuppConf {
             // construct PLI index
             this.input.buildPLIs_col_OnSpark(chunkLength);
 
+            this.index_null_string = this.input.getIndexNullString();
+            this.index_null_double = this.input.getIndexNullDouble();
+            this.index_null_long = this.input.getIndexNullLong();
+
             // load ML Selection
             MLSelection mlsel = new MLSelection();
             mlsel.configure(mlsel_file);
@@ -515,7 +523,8 @@ public class CalculateRuleSuppConf {
 
             this.parallelRuleDiscoverySampling = new ParallelRuleDiscoverySampling(this.allPredicates, 10000, this.maxTupleNum,
                     this.support, (float) this.confidence, this.maxOneRelationNum, this.input, this.allCount,
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, filter_enum_number);
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, filter_enum_number,
+                    this.index_null_string, this.index_null_double, this.index_null_long);
 
             this.table_name = "";
             for (String name : this.input.getNames()) {

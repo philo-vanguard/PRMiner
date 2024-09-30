@@ -55,6 +55,10 @@ public class ParallelRuleDiscoverySamplingB {
 
     private HashMap<IBitSet, ArrayList<Predicate>> validXRHSs;
 
+    private int index_null_string;
+    private int index_null_double;
+    private int index_null_long;
+
     public DenialConstraintSet getREEsResults() {
         return this.REEsResults;
     }
@@ -361,7 +365,8 @@ public class ParallelRuleDiscoverySamplingB {
         JavaSparkContext sc = new JavaSparkContext(spark.sparkContext());
 
         BroadcastObj broadcastObj = new BroadcastObj(this.maxTupleNum, this.inputLight, this.support, this.confidence,
-                this.maxOneRelationNum, tupleNumberRelations);
+                this.maxOneRelationNum, tupleNumberRelations,
+                this.index_null_string, this.index_null_double, this.index_null_long);
         // broadcast data
         // ... left for future
 
@@ -474,12 +479,12 @@ public class ParallelRuleDiscoverySamplingB {
         for (Predicate p : this.allPredicates) {
             String k = p.getOperand1().getColumn().toStringData();
             if (! colsMap.containsKey(k)) {
-                ParsedColumnLight<?> col = new ParsedColumnLight<>(p.getOperand1().getColumn());
+                ParsedColumnLight<?> col = new ParsedColumnLight<>(p.getOperand1().getColumn(), p.getOperand1().getColumn().getType());
                 colsMap.put(k, col);
             }
             k = p.getOperand2().getColumn().toStringData();
             if (! colsMap.containsKey(k)) {
-                ParsedColumnLight<?> col = new ParsedColumnLight<>(p.getOperand2().getColumn());
+                ParsedColumnLight<?> col = new ParsedColumnLight<>(p.getOperand2().getColumn(), p.getOperand2().getColumn().getType());
                 colsMap.put(k, col);
             }
         }
