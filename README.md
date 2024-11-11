@@ -53,7 +53,7 @@ hdfs dfs mkdir -p /tmp/rulefind/allPredicates/
 hdfs dfs -put airports_predicates.txt /tmp/rulefind/allPredicates/
 ```
 3. Download all the dependencies from Google Drive link:
-https://drive.google.com/drive/folders/1xup0eVNB84BgJz3GSrFCy9X_bG2GF8Lm?usp=sharing, then move the directory lib/ into mls-server/example/:
+https://drive.google.com/drive/folders/1Gviqt7zcaRGQho4x5i6hPnuwPmWonWFR?usp=sharing, then move the directory lib/ into mls-server/example/:
 ```
 cd mls-server/
 mv lib/ example/
